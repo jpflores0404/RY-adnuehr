@@ -96,7 +96,7 @@ export default function PostpartumMonitoringForm({
     formData.set("preventiveBabyChecklist", JSON.stringify(preventiveBabyChecked));
 
     const newRecord = await addPostpartumRecord(patientId, formData);
-    setRecords([newRecord, ...records]);
+    setRecords([newRecord as unknown as PostpartumRecordData, ...records]);
     setIsAdding(false);
     setMotherTreatments([{ time: "", treatment: "" }]);
     setNewbornTreatments([{ time: "", treatment: "" }]);
