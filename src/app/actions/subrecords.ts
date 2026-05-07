@@ -1,275 +1,369 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/sql";
 import { revalidatePath } from "next/cache";
+
+function uid(prefix: string) {
+  return `${prefix}-${crypto.randomUUID()}`;
+}
+
+function routeFor(patientId: string, isNewborn: boolean) {
+  return isNewborn ? `/newborn/${patientId}` : `/maternal/${patientId}`;
+}
+
+function parentColumn(isNewborn: boolean) {
+  return isNewborn ? "newbornRecordId" : "maternalPatientId";
+}
+
+async function getParentIds(table: string, id: string) {
+  const res = await db.execute({
+    sql: `SELECT maternalPatientId, newbornRecordId FROM "${table}" WHERE id = ? LIMIT 1`,
+    args: [id],
+  });
+  return (res.rows[0] as any) || null;
+}
 
 export async function addVitalSign(patientId: string, isNewborn: boolean, formData: FormData) {
   const data = Object.fromEntries(formData.entries());
-  const vital = await prisma.vitalSign.create({
-    data: {
-      maternalPatientId: isNewborn ? undefined : patientId,
-      newbornRecordId: isNewborn ? patientId : undefined,
-      date: data.date as string,
-      time: data.time as string,
-      bloodPressure: (data.bloodPressure as string) || null,
-      pulseRate: data.pulseRate as string,
-      respiratoryRate: data.respiratoryRate as string,
-      temperature: data.temperature as string,
-      signature: data.signature as string,
-    }
+  const id = uid("vs");
+  const parent = parentColumn(isNewborn);
+
+  await db.execute({
+    sql: `
+      INSERT INTO "VitalSign" (id, date, time, bloodPressure, pulseRate, respiratoryRate, temperature, signature, ${parent})
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+    args: [
+      id,
+      data.date as string,
+      data.time as string,
+      (data.bloodPressure as string) || null,
+      data.pulseRate as string,
+      data.respiratoryRate as string,
+      data.temperature as string,
+      data.signature as string,
+      patientId,
+    ],
   });
-  revalidatePath(isNewborn ? `/newborn/${patientId}` : `/maternal/${patientId}`);
-  return vital;
+
+  revalidatePath(routeFor(patientId, isNewborn));
+  return {
+    id,
+    date: data.date,
+    time: data.time,
+    bloodPressure: data.bloodPressure || null,
+    pulseRate: data.pulseRate,
+    respiratoryRate: data.respiratoryRate,
+    temperature: data.temperature,
+    signature: data.signature,
+  };
 }
 
 export async function deleteVitalSign(id: string) {
-  const vs = await prisma.vitalSign.findUnique({ where: { id } });
-  await prisma.vitalSign.delete({ where: { id } });
-  if (vs?.maternalPatientId) revalidatePath(`/maternal/${vs.maternalPatientId}`);
-  if (vs?.newbornRecordId) revalidatePath(`/newborn/${vs.newbornRecordId}`);
+  const parent = await getParentIds("VitalSign", id);
+  await db.execute({ sql: `DELETE FROM "VitalSign" WHERE id = ?`, args: [id] });
+  if (parent?.maternalPatientId) revalidatePath(`/maternal/${parent.maternalPatientId}`);
+  if (parent?.newbornRecordId) revalidatePath(`/newborn/${parent.newbornRecordId}`);
 }
 
 export async function addMedication(patientId: string, isNewborn: boolean, formData: FormData) {
   const data = Object.fromEntries(formData.entries());
-  const med = await prisma.medication.create({
-    data: {
-      maternalPatientId: isNewborn ? undefined : patientId,
-      newbornRecordId: isNewborn ? patientId : undefined,
-      medicationName: data.medicationName as string,
-      dateGiven: data.dateGiven as string,
-      timeGiven: (data.timeGiven as string) || null,
-      route: data.route as string,
-      givenBy: data.givenBy as string,
-    }
+  const id = uid("med");
+  const parent = parentColumn(isNewborn);
+
+  await db.execute({
+    sql: `
+      INSERT INTO "Medication" (id, medicationName, dateGiven, timeGiven, route, givenBy, ${parent})
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `,
+    args: [
+      id,
+      data.medicationName as string,
+      data.dateGiven as string,
+      (data.timeGiven as string) || null,
+      data.route as string,
+      data.givenBy as string,
+      patientId,
+    ],
   });
-  revalidatePath(isNewborn ? `/newborn/${patientId}` : `/maternal/${patientId}`);
-  return med;
+
+  revalidatePath(routeFor(patientId, isNewborn));
+  return {
+    id,
+    medicationName: data.medicationName,
+    dateGiven: data.dateGiven,
+    timeGiven: data.timeGiven || null,
+    route: data.route,
+    givenBy: data.givenBy,
+  };
 }
 
 export async function deleteMedication(id: string) {
-  const med = await prisma.medication.findUnique({ where: { id } });
-  await prisma.medication.delete({ where: { id } });
-  if (med?.maternalPatientId) revalidatePath(`/maternal/${med.maternalPatientId}`);
-  if (med?.newbornRecordId) revalidatePath(`/newborn/${med.newbornRecordId}`);
+  const parent = await getParentIds("Medication", id);
+  await db.execute({ sql: `DELETE FROM "Medication" WHERE id = ?`, args: [id] });
+  if (parent?.maternalPatientId) revalidatePath(`/maternal/${parent.maternalPatientId}`);
+  if (parent?.newbornRecordId) revalidatePath(`/newborn/${parent.newbornRecordId}`);
 }
 
 export async function addNurseNote(patientId: string, isNewborn: boolean, formData: FormData) {
   const data = Object.fromEntries(formData.entries());
-  const note = await prisma.nurseNote.create({
-    data: {
-      maternalPatientId: isNewborn ? undefined : patientId,
-      newbornRecordId: isNewborn ? patientId : undefined,
-      date: data.date as string,
-      time: (data.time as string) || null,
-      shift: data.shift as string,
-      focus: data.focus as string,
-      data: data.data as string,
-      action: data.action as string,
-      response: data.response as string,
-    }
+  const id = uid("note");
+  const parent = parentColumn(isNewborn);
+
+  await db.execute({
+    sql: `
+      INSERT INTO "NurseNote" (id, date, time, shift, focus, data, action, response, ${parent})
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+    args: [
+      id,
+      data.date as string,
+      (data.time as string) || null,
+      data.shift as string,
+      data.focus as string,
+      data.data as string,
+      data.action as string,
+      data.response as string,
+      patientId,
+    ],
   });
-  revalidatePath(isNewborn ? `/newborn/${patientId}` : `/maternal/${patientId}`);
-  return note;
+
+  revalidatePath(routeFor(patientId, isNewborn));
+  return {
+    id,
+    date: data.date,
+    time: data.time || null,
+    shift: data.shift,
+    focus: data.focus,
+    data: data.data,
+    action: data.action,
+    response: data.response,
+  };
 }
 
 export async function deleteNurseNote(id: string) {
-  const note = await prisma.nurseNote.findUnique({ where: { id } });
-  await prisma.nurseNote.delete({ where: { id } });
-  if (note?.maternalPatientId) revalidatePath(`/maternal/${note.maternalPatientId}`);
-  if (note?.newbornRecordId) revalidatePath(`/newborn/${note.newbornRecordId}`);
+  const parent = await getParentIds("NurseNote", id);
+  await db.execute({ sql: `DELETE FROM "NurseNote" WHERE id = ?`, args: [id] });
+  if (parent?.maternalPatientId) revalidatePath(`/maternal/${parent.maternalPatientId}`);
+  if (parent?.newbornRecordId) revalidatePath(`/newborn/${parent.newbornRecordId}`);
 }
 
 export async function addOutputChart(patientId: string, isNewborn: boolean, formData: FormData) {
   const data = Object.fromEntries(formData.entries());
-  const output = await prisma.outputChart.create({
-    data: {
-      maternalPatientId: isNewborn ? undefined : patientId,
-      newbornRecordId: isNewborn ? patientId : undefined,
-      date: data.date as string,
-      shift: data.shift as string,
-      stoolCount: parseInt(data.stoolCount as string) || 0,
-      urineCount: parseInt(data.urineCount as string) || 0,
-    }
+  const id = uid("out");
+  const parent = parentColumn(isNewborn);
+
+  await db.execute({
+    sql: `
+      INSERT INTO "OutputChart" (id, date, shift, stoolCount, urineCount, ${parent})
+      VALUES (?, ?, ?, ?, ?, ?)
+    `,
+    args: [
+      id,
+      data.date as string,
+      data.shift as string,
+      parseInt(data.stoolCount as string, 10) || 0,
+      parseInt(data.urineCount as string, 10) || 0,
+      patientId,
+    ],
   });
-  revalidatePath(isNewborn ? `/newborn/${patientId}` : `/maternal/${patientId}`);
-  return output;
+
+  revalidatePath(routeFor(patientId, isNewborn));
+  return {
+    id,
+    date: data.date,
+    shift: data.shift,
+    stoolCount: parseInt(data.stoolCount as string, 10) || 0,
+    urineCount: parseInt(data.urineCount as string, 10) || 0,
+  };
 }
 
 export async function deleteOutputChart(id: string) {
-  const oc = await prisma.outputChart.findUnique({ where: { id } });
-  await prisma.outputChart.delete({ where: { id } });
-  if (oc?.maternalPatientId) revalidatePath(`/maternal/${oc.maternalPatientId}`);
-  if (oc?.newbornRecordId) revalidatePath(`/newborn/${oc.newbornRecordId}`);
+  const parent = await getParentIds("OutputChart", id);
+  await db.execute({ sql: `DELETE FROM "OutputChart" WHERE id = ?`, args: [id] });
+  if (parent?.maternalPatientId) revalidatePath(`/maternal/${parent.maternalPatientId}`);
+  if (parent?.newbornRecordId) revalidatePath(`/newborn/${parent.newbornRecordId}`);
 }
 
 export async function submitApgarScore(newbornId: string, minuteType: string, formData: FormData) {
   const data = Object.fromEntries(formData.entries());
-  
-  const heartRate = parseInt(data.heartRate as string) || 0;
-  const respiratoryEffort = parseInt(data.respiratoryEffort as string) || 0;
-  const muscleTone = parseInt(data.muscleTone as string) || 0;
-  const reflexIrritability = parseInt(data.reflexIrritability as string) || 0;
-  const skinColor = parseInt(data.skinColor as string) || 0;
+  const id = uid("apgar");
+
+  const heartRate = parseInt(data.heartRate as string, 10) || 0;
+  const respiratoryEffort = parseInt(data.respiratoryEffort as string, 10) || 0;
+  const muscleTone = parseInt(data.muscleTone as string, 10) || 0;
+  const reflexIrritability = parseInt(data.reflexIrritability as string, 10) || 0;
+  const skinColor = parseInt(data.skinColor as string, 10) || 0;
   const totalScore = heartRate + respiratoryEffort + muscleTone + reflexIrritability + skinColor;
 
-  const score = await prisma.apgarScore.create({
-    data: {
-      newbornRecordId: newbornId,
-      minuteType,
-      heartRate,
-      respiratoryEffort,
-      muscleTone,
-      reflexIrritability,
-      skinColor,
-      totalScore,
-    }
+  await db.execute({
+    sql: `
+      INSERT INTO "ApgarScore" (
+        id, newbornRecordId, minuteType, heartRate, respiratoryEffort, muscleTone, reflexIrritability, skinColor, totalScore
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+    args: [id, newbornId, minuteType, heartRate, respiratoryEffort, muscleTone, reflexIrritability, skinColor, totalScore],
   });
+
   revalidatePath(`/newborn/${newbornId}`);
-  return score;
+  return { id, newbornRecordId: newbornId, minuteType, heartRate, respiratoryEffort, muscleTone, reflexIrritability, skinColor, totalScore };
 }
 
 export async function addPhysicianOrder(patientId: string, isNewborn: boolean, formData: FormData) {
   const data = Object.fromEntries(formData.entries());
-  const order = await prisma.physicianOrder.create({
-    data: {
-      maternalPatientId: isNewborn ? undefined : patientId,
-      newbornRecordId: isNewborn ? patientId : undefined,
-      date: data.date as string,
-      notes: data.notes as string,
-    }
+  const id = uid("ord");
+  const parent = parentColumn(isNewborn);
+
+  await db.execute({
+    sql: `INSERT INTO "PhysicianOrder" (id, date, notes, ${parent}) VALUES (?, ?, ?, ?)`,
+    args: [id, data.date as string, data.notes as string, patientId],
   });
-  revalidatePath(isNewborn ? `/newborn/${patientId}` : `/maternal/${patientId}`);
-  return order;
+
+  revalidatePath(routeFor(patientId, isNewborn));
+  return { id, date: data.date, notes: data.notes };
 }
 
 export async function deletePhysicianOrder(id: string) {
-  const order = await prisma.physicianOrder.findUnique({ where: { id } });
-  await prisma.physicianOrder.delete({ where: { id } });
-  if (order?.maternalPatientId) revalidatePath(`/maternal/${order.maternalPatientId}`);
-  if (order?.newbornRecordId) revalidatePath(`/newborn/${order.newbornRecordId}`);
+  const parent = await getParentIds("PhysicianOrder", id);
+  await db.execute({ sql: `DELETE FROM "PhysicianOrder" WHERE id = ?`, args: [id] });
+  if (parent?.maternalPatientId) revalidatePath(`/maternal/${parent.maternalPatientId}`);
+  if (parent?.newbornRecordId) revalidatePath(`/newborn/${parent.newbornRecordId}`);
 }
 
 export async function addUltrasoundResult(patientId: string, formData: FormData) {
   const data = Object.fromEntries(formData.entries());
-  const result = await prisma.ultrasoundResult.create({
-    data: {
-      maternalPatientId: patientId,
-      datePerformed: data.datePerformed as string,
-      impression: data.impression as string,
-    }
+  const id = uid("utz");
+
+  await db.execute({
+    sql: `INSERT INTO "UltrasoundResult" (id, maternalPatientId, datePerformed, impression) VALUES (?, ?, ?, ?)`,
+    args: [id, patientId, data.datePerformed as string, data.impression as string],
   });
+
   revalidatePath(`/maternal/${patientId}`);
-  return result;
+  return { id, maternalPatientId: patientId, datePerformed: data.datePerformed, impression: data.impression };
 }
 
 export async function deleteUltrasoundResult(id: string) {
-  const us = await prisma.ultrasoundResult.findUnique({ where: { id } });
-  await prisma.ultrasoundResult.delete({ where: { id } });
-  if (us) revalidatePath(`/maternal/${us.maternalPatientId}`);
+  const res = await db.execute({ sql: `SELECT maternalPatientId FROM "UltrasoundResult" WHERE id = ? LIMIT 1`, args: [id] });
+  const patientId = (res.rows[0] as any)?.maternalPatientId;
+  await db.execute({ sql: `DELETE FROM "UltrasoundResult" WHERE id = ?`, args: [id] });
+  if (patientId) revalidatePath(`/maternal/${patientId}`);
 }
 
 export async function addLabResult(patientId: string, formData: FormData) {
   const data = Object.fromEntries(formData.entries());
-  const result = await prisma.labResult.create({
-    data: {
-      maternalPatientId: patientId,
-      datePerformed: data.datePerformed as string,
-      remarks: (data.remarks as string) || null,
+  const id = uid("lab");
 
-      wbcCount: (data.wbcCount as string) || null,
-      rbcCount: (data.rbcCount as string) || null,
-      hemoglobin: (data.hemoglobin as string) || null,
-      hematocrit: (data.hematocrit as string) || null,
-      mcv: (data.mcv as string) || null,
-      mch: (data.mch as string) || null,
-      mchc: (data.mchc as string) || null,
-      neutrophils: (data.neutrophils as string) || null,
-      lymphocytes: (data.lymphocytes as string) || null,
-      monocytes: (data.monocytes as string) || null,
-      eosinophils: (data.eosinophils as string) || null,
-      basophils: (data.basophils as string) || null,
-      plateletCount: (data.plateletCount as string) || null,
-
-      urineColor: (data.urineColor as string) || null,
-      urineTransparency: (data.urineTransparency as string) || null,
-      urineReaction: (data.urineReaction as string) || null,
-      urinePH: (data.urinePH as string) || null,
-      urineSpecificGravity: (data.urineSpecificGravity as string) || null,
-      urineGlucose: (data.urineGlucose as string) || null,
-      urineProtein: (data.urineProtein as string) || null,
-      urineWBC: (data.urineWBC as string) || null,
-      urineRBC: (data.urineRBC as string) || null,
-      urineEpithelialCells: (data.urineEpithelialCells as string) || null,
-      urineMicroscopicOther: (data.urineMicroscopicOther as string) || null,
-
-      bloodTypeABO: (data.bloodTypeABO as string) || null,
-      bloodTypeRh: (data.bloodTypeRh as string) || null,
-      antiA: (data.antiA as string) || null,
-      antiB: (data.antiB as string) || null,
-      antiD: (data.antiD as string) || null,
-    }
+  await db.execute({
+    sql: `
+      INSERT INTO "LabResult" (
+        id, maternalPatientId, datePerformed, remarks,
+        wbcCount, rbcCount, hemoglobin, hematocrit, mcv, mch, mchc,
+        neutrophils, lymphocytes, monocytes, eosinophils, basophils, plateletCount,
+        urineColor, urineTransparency, urineReaction, urinePH, urineSpecificGravity,
+        urineGlucose, urineProtein, urineWBC, urineRBC, urineEpithelialCells, urineMicroscopicOther,
+        bloodTypeABO, bloodTypeRh, antiA, antiB, antiD
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+    args: [
+      id,
+      patientId,
+      data.datePerformed as string,
+      (data.remarks as string) || null,
+      (data.wbcCount as string) || null,
+      (data.rbcCount as string) || null,
+      (data.hemoglobin as string) || null,
+      (data.hematocrit as string) || null,
+      (data.mcv as string) || null,
+      (data.mch as string) || null,
+      (data.mchc as string) || null,
+      (data.neutrophils as string) || null,
+      (data.lymphocytes as string) || null,
+      (data.monocytes as string) || null,
+      (data.eosinophils as string) || null,
+      (data.basophils as string) || null,
+      (data.plateletCount as string) || null,
+      (data.urineColor as string) || null,
+      (data.urineTransparency as string) || null,
+      (data.urineReaction as string) || null,
+      (data.urinePH as string) || null,
+      (data.urineSpecificGravity as string) || null,
+      (data.urineGlucose as string) || null,
+      (data.urineProtein as string) || null,
+      (data.urineWBC as string) || null,
+      (data.urineRBC as string) || null,
+      (data.urineEpithelialCells as string) || null,
+      (data.urineMicroscopicOther as string) || null,
+      (data.bloodTypeABO as string) || null,
+      (data.bloodTypeRh as string) || null,
+      (data.antiA as string) || null,
+      (data.antiB as string) || null,
+      (data.antiD as string) || null,
+    ],
   });
+
   revalidatePath(`/maternal/${patientId}`);
-  return result;
+  return { id, maternalPatientId: patientId, ...data };
 }
 
 export async function deleteLabResult(id: string) {
-  const lab = await prisma.labResult.findUnique({ where: { id } });
-  await prisma.labResult.delete({ where: { id } });
-  if (lab) revalidatePath(`/maternal/${lab.maternalPatientId}`);
+  const res = await db.execute({ sql: `SELECT maternalPatientId FROM "LabResult" WHERE id = ? LIMIT 1`, args: [id] });
+  const patientId = (res.rows[0] as any)?.maternalPatientId;
+  await db.execute({ sql: `DELETE FROM "LabResult" WHERE id = ?`, args: [id] });
+  if (patientId) revalidatePath(`/maternal/${patientId}`);
 }
 
 export async function updateBloodTyping(patientId: string, formData: FormData) {
   const data = Object.fromEntries(formData.entries());
-  await prisma.maternalPatient.update({
-    where: { id: patientId },
-    data: {
-      antiA: (data.antiA as string) || null,
-      antiB: (data.antiB as string) || null,
-      antiD: (data.antiD as string) || null,
-      bloodTypeABO: (data.bloodTypeABO as string) || null,
-      bloodTypeRh: (data.bloodTypeRh as string) || null,
-    }
+  await db.execute({
+    sql: `
+      UPDATE "MaternalPatient"
+      SET antiA = ?, antiB = ?, antiD = ?, bloodTypeABO = ?, bloodTypeRh = ?, updatedAt = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `,
+    args: [
+      (data.antiA as string) || null,
+      (data.antiB as string) || null,
+      (data.antiD as string) || null,
+      (data.bloodTypeABO as string) || null,
+      (data.bloodTypeRh as string) || null,
+      patientId,
+    ],
   });
   revalidatePath(`/maternal/${patientId}`);
 }
 
 export async function addPostpartumRecord(patientId: string, formData: FormData) {
   const data = Object.fromEntries(formData.entries());
-  const record = await prisma.postpartumRecord.create({
-    data: {
-      maternalPatientId: patientId,
-      assessmentTime: data.assessmentTime as string,
-      hoursLabel: (data.hoursLabel as string) || null,
-      rapidAssessment: (data.rapidAssessment as string) || null,
-      bleeding: (data.bleeding as string) || null,
-      uterusFirmness: (data.uterusFirmness as string) || null,
-      maternalBP: (data.maternalBP as string) || null,
-      pulse: (data.pulse as string) || null,
-      temperature: (data.temperature as string) || null,
-      urineVoided: (data.urineVoided as string) || null,
-      vulvaStatus: (data.vulvaStatus as string) || null,
-      newbornBreathing: (data.newbornBreathing as string) || null,
-      newbornWarmth: (data.newbornWarmth as string) || null,
-      newbornAbnormalSigns: (data.newbornAbnormalSigns as string) || null,
-      feedingObserved: (data.feedingObserved as string) || null,
-      comments: (data.comments as string) || null,
-      motherTreatments: (data.motherTreatments as string) || null,
-      newbornTreatments: (data.newbornTreatments as string) || null,
-      ifReferred: (data.ifReferred as string) || null,
-      ifDeath: (data.ifDeath as string) || null,
-      adviseMotherChecklist: (data.adviseMotherChecklist as string) || null,
-      adviseBabyChecklist: (data.adviseBabyChecklist as string) || null,
-      preventiveMotherChecklist: (data.preventiveMotherChecklist as string) || null,
-      preventiveBabyChecklist: (data.preventiveBabyChecklist as string) || null,
-    }
+  const id = uid("pp");
+
+  await db.execute({
+    sql: `
+      INSERT INTO "PostpartumRecord" (id, maternalPatientId, assessmentTime, bleeding, uterusFirmness, bloodPressure, pulse, urineVoided, vulvaStatus, newbornBreathing, newbornWarmth)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+    args: [
+      id,
+      patientId,
+      data.assessmentTime as string,
+      (data.bleeding as string) || null,
+      (data.uterusFirmness as string) || null,
+      (data.maternalBP as string) || null,
+      (data.pulse as string) || null,
+      (data.urineVoided as string) || null,
+      (data.vulvaStatus as string) || null,
+      (data.newbornBreathing as string) || null,
+      (data.newbornWarmth as string) || null,
+    ],
   });
+
   revalidatePath(`/maternal/${patientId}`);
-  return record;
+  return { id, maternalPatientId: patientId, ...data };
 }
 
 export async function deletePostpartumRecord(id: string) {
-  const pp = await prisma.postpartumRecord.findUnique({ where: { id } });
-  await prisma.postpartumRecord.delete({ where: { id } });
-  if (pp) revalidatePath(`/maternal/${pp.maternalPatientId}`);
+  const res = await db.execute({ sql: `SELECT maternalPatientId FROM "PostpartumRecord" WHERE id = ? LIMIT 1`, args: [id] });
+  const patientId = (res.rows[0] as any)?.maternalPatientId;
+  await db.execute({ sql: `DELETE FROM "PostpartumRecord" WHERE id = ?`, args: [id] });
+  if (patientId) revalidatePath(`/maternal/${patientId}`);
 }

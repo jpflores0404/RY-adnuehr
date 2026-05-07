@@ -1,26 +1,9 @@
-import { prisma } from '@/lib/prisma';
-import Link from 'next/link';
-import { Users, Baby, Activity, AlertCircle } from 'lucide-react';
+import Link from "next/link";
+import { Users, Activity, AlertCircle } from "lucide-react";
+import { getDashboardData } from "@/lib/maternal-sql";
 
 export default async function Dashboard() {
-  const [totalMaternal, activeMaternal, totalNewborn, recentAdmissions] = await Promise.all([
-    prisma.maternalPatient.count(),
-    prisma.maternalPatient.count({ where: { status: 'Active' } }),
-    prisma.newbornRecord.count(),
-    prisma.maternalPatient.findMany({
-      take: 5,
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        dateAdmitted: true,
-        admittingDiagnosis: true,
-        status: true,
-        admissionNumber: true
-      }
-    })
-  ]);
+  const { totalMaternal, activeMaternal, recentAdmissions } = await getDashboardData();
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
@@ -30,40 +13,19 @@ export default async function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
-          title="Total Maternal Records" 
-          value={totalMaternal} 
-          icon={Users} 
-          color="bg-blue-500" 
-        />
-        <StatCard 
-          title="Active Admissions" 
-          value={activeMaternal} 
-          icon={Activity} 
-          color="bg-blue-600" 
-        />
-         <StatCard 
-          title="Total Newborn Records" 
-          value={totalNewborn} 
-          icon={Baby} 
-          color="bg-sky-500" 
-        />
-        <StatCard 
-          title="Critical Alerts" 
-          value={0} 
-          icon={AlertCircle} 
-          color="bg-slate-400" 
-        />
+        <StatCard title="Total Maternal Records" value={totalMaternal} icon={Users} color="bg-red-500" />
+        <StatCard title="Active Admissions" value={activeMaternal} icon={Activity} color="bg-red-600" />
+        <StatCard title="Critical Alerts" value={0} icon={AlertCircle} color="bg-slate-400" />
       </div>
 
       <div className="glass-card overflow-hidden">
         <div className="p-6 glass-header flex justify-between items-center">
           <h2 className="text-xl font-semibold text-slate-800">Recent Admissions</h2>
-          <Link href="/maternal/new" className="glass-button-primary px-4 py-2 rounded-xl font-medium transition-all text-sm">
-            + New Admission
+          <Link href="/maternal" className="glass-button-primary px-4 py-2 rounded-xl font-medium transition-all text-sm">
+            View Patient Charts
           </Link>
         </div>
-        
+
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -79,32 +41,22 @@ export default async function Dashboard() {
             <tbody>
               {recentAdmissions.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-slate-500">
-                    No recent admissions found.
-                  </td>
+                  <td colSpan={6} className="p-8 text-center text-slate-500">No recent admissions found.</td>
                 </tr>
               ) : (
-                recentAdmissions.map((patient) => (
-                  <tr key={patient.id} className="border-b border-white/40 hover:bg-white/30 transition-colors">
-                    <td className="p-4 font-semibold text-slate-900">
-                      {patient.lastName}, {patient.firstName}
-                    </td>
-                    <td className="p-4 text-slate-700">{patient.admissionNumber}</td>
-                    <td className="p-4 text-slate-700">
-                      {new Date(patient.dateAdmitted).toLocaleDateString()}
-                    </td>
-                    <td className="p-4 text-slate-700 truncate max-w-xs">{patient.admittingDiagnosis}</td>
+                recentAdmissions.map((patient: any) => (
+                  <tr key={patient.id as string} className="border-b border-white/40 hover:bg-white/30 transition-colors">
+                    <td className="p-4 font-semibold text-slate-900">{patient.lastName as string}, {patient.firstName as string}</td>
+                    <td className="p-4 text-slate-700">{patient.admissionNumber as string}</td>
+                    <td className="p-4 text-slate-700">{new Date(patient.dateAdmitted as string).toLocaleDateString()}</td>
+                    <td className="p-4 text-slate-700 truncate max-w-xs">{patient.admittingDiagnosis as string}</td>
                     <td className="p-4">
-                      <span className={`px-3 py-1 rounded-full border text-xs font-semibold backdrop-blur-sm ${
-                        patient.status === 'Active' 
-                          ? 'bg-emerald-100/50 text-emerald-800 border-emerald-300/50' 
-                          : 'bg-slate-100/50 text-slate-700 border-slate-300/50'
-                      }`}>
-                        {patient.status}
+                      <span className={`px-3 py-1 rounded-full border text-xs font-semibold backdrop-blur-sm ${(patient.status as string) === "Active" ? "bg-emerald-100/50 text-emerald-800 border-emerald-300/50" : "bg-slate-100/50 text-slate-700 border-slate-300/50"}`}>
+                        {patient.status as string}
                       </span>
                     </td>
                     <td className="p-4 text-right">
-                      <Link href={`/maternal/${patient.id}`} className="text-blue-700 hover:text-blue-900 bg-white/40 hover:bg-white/80 px-3 py-1.5 rounded-lg border border-white/60 text-sm font-semibold shadow-sm transition-all">
+                      <Link href={`/maternal/${patient.id as string}`} className="text-red-700 hover:text-red-900 bg-white/40 hover:bg-white/80 px-3 py-1.5 rounded-lg border border-white/60 text-sm font-semibold shadow-sm transition-all">
                         View Chart
                       </Link>
                     </td>
@@ -119,7 +71,7 @@ export default async function Dashboard() {
   );
 }
 
-function StatCard({ title, value, icon: Icon, color }: { title: string, value: number, icon: any, color: string }) {
+function StatCard({ title, value, icon: Icon, color }: { title: string; value: number; icon: any; color: string }) {
   return (
     <div className="glass-card p-6 flex items-center gap-5 hover:scale-[1.02] transition-transform duration-300">
       <div className={`${color} p-4 rounded-2xl text-white shadow-lg backdrop-blur-md bg-opacity-90`}>

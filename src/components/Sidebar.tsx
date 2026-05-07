@@ -2,24 +2,23 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Baby, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, LogOut } from 'lucide-react';
 import { logoutAction } from '@/app/actions/auth';
 
 const navItems = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Maternal Records', href: '/maternal', icon: Users },
-  { name: 'Newborn Records', href: '/newborn', icon: Baby },
-  { name: 'Settings', href: '/settings', icon: Settings },
+  { name: 'Patient', href: '/maternal', icon: Users },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 glass-sidebar text-white flex-shrink-0 min-h-screen relative">
-      <div className="p-6">
-        <h1 className="text-2xl font-bold tracking-tight">ADNU EHR</h1>
-        <p className="text-blue-200 text-sm mt-1">Maternity & Birthing Home</p>
+    <aside className="w-64 glass-sidebar flex-shrink-0 min-h-screen relative flex flex-col">
+      <div className="p-6 border-b border-red-100/50">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <span className="text-red-600">Kalusugan</span>PH
+        </h1>
       </div>
       
       <nav className="mt-6">
@@ -32,14 +31,14 @@ export default function Sidebar() {
               <li key={item.name}>
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 font-medium
                     ${isActive 
-                      ? 'bg-white/20 shadow-lg border border-white/10 text-white' 
-                      : 'text-blue-100/80 hover:bg-white/10 hover:text-white border border-transparent'
+                      ? 'bg-red-100/80 shadow-sm border border-red-200 text-slate-900' 
+                      : 'text-slate-600 hover:bg-red-50 hover:text-slate-900 border border-transparent'
                     }`}
                 >
-                  <Icon size={20} className={isActive ? 'text-white' : 'text-blue-200'} />
-                  <span className="font-medium">{item.name}</span>
+                  <Icon size={20} className={isActive ? 'text-red-600' : 'text-slate-400'} />
+                  <span>{item.name}</span>
                 </Link>
               </li>
             );
@@ -53,7 +52,7 @@ export default function Sidebar() {
             await logoutAction();
             window.location.href = '/login';
           }}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-900/40 hover:bg-rose-500/80 text-blue-100 hover:text-white transition-all duration-300 backdrop-blur-md shadow-sm border border-blue-400/20 hover:border-rose-400 border-transparent text-sm font-semibold"
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-600 transition-all duration-300 border border-slate-200 hover:border-rose-200 text-sm font-semibold shadow-sm"
         >
           <LogOut size={18} />
           <span>Sign Out</span>
