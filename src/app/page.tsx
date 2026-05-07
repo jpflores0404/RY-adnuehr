@@ -48,7 +48,7 @@ export default async function Dashboard() {
                   <tr key={patient.id as string} className="border-b border-white/40 hover:bg-white/30 transition-colors">
                     <td className="p-4 font-semibold text-slate-900">{patient.lastName as string}, {patient.firstName as string}</td>
                     <td className="p-4 text-slate-700">{patient.admissionNumber as string}</td>
-                    <td className="p-4 text-slate-700">{new Date(patient.dateAdmitted as string).toLocaleDateString()}</td>
+                    <td className="p-4 text-slate-700">{new Date(patient.dateAdmitted as any).toLocaleDateString()}</td>
                     <td className="p-4 text-slate-700 truncate max-w-xs">{patient.admittingDiagnosis as string}</td>
                     <td className="p-4">
                       <span className={`px-3 py-1 rounded-full border text-xs font-semibold backdrop-blur-sm ${(patient.status as string) === "Active" ? "bg-emerald-100/50 text-emerald-800 border-emerald-300/50" : "bg-slate-100/50 text-slate-700 border-slate-300/50"}`}>

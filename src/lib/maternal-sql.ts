@@ -1,68 +1,74 @@
-import { db } from "@/lib/sql";
-
-function row<T>(rows: unknown[]): T | null {
-  return ((rows[0] as T) ?? null);
-}
+import { prisma } from "@/lib/prisma";
 
 export async function getMaternalPatients() {
-  const result = await db.execute(`
-    SELECT id, admissionNumber, lastName, firstName, age, contactNumber, attendingPhysician, dateAdmitted, status
-    FROM "MaternalPatient"
-    ORDER BY date(dateAdmitted) DESC, createdAt DESC
-  `);
-  return result.rows as any[];
+  const patients = await prisma.maternalPatient.findMany({
+    select: {
+      id: true,
+      admissionNumber: true,
+      lastName: true,
+      firstName: true,
+      age: true,
+      contactNumber: true,
+      attendingPhysician: true,
+      dateAdmitted: true,
+      status: true,
+    },
+    orderBy: [
+      { dateAdmitted: "desc" },
+      { createdAt: "desc" },
+    ],
+  });
+  return patients;
 }
 
 export async function getMaternalPatientChart(id: string) {
-  const patientRes = await db.execute({
-    sql: `SELECT * FROM "MaternalPatient" WHERE id = ? LIMIT 1`,
-    args: [id],
+  const patient = await prisma.maternalPatient.findUnique({
+    where: { id },
+    include: {
+      vitalSigns: { orderBy: { createdAt: "desc" } },
+      medications: { orderBy: { createdAt: "desc" } },
+      nurseNotes: { orderBy: { createdAt: "desc" } },
+      outputCharts: { orderBy: { createdAt: "desc" } },
+      labResults: { orderBy: { createdAt: "desc" } },
+      physicianOrders: { orderBy: { createdAt: "desc" } },
+      ultrasoundResults: { orderBy: { createdAt: "desc" } },
+      postpartumRecords: { orderBy: { createdAt: "desc" } },
+      newborns: { orderBy: { createdAt: "desc" } },
+    },
   });
 
-  const patient = row<any>(patientRes.rows);
   if (!patient) return null;
 
-  const [vitalSigns, medications, nurseNotes, outputCharts, labResults, physicianOrders, ultrasoundResults] = await Promise.all([
-    db.execute({ sql: `SELECT * FROM "VitalSign" WHERE maternalPatientId = ? ORDER BY createdAt DESC`, args: [id] }),
-    db.execute({ sql: `SELECT * FROM "Medication" WHERE maternalPatientId = ? ORDER BY createdAt DESC`, args: [id] }),
-    db.execute({ sql: `SELECT * FROM "NurseNote" WHERE maternalPatientId = ? ORDER BY createdAt DESC`, args: [id] }),
-    db.execute({ sql: `SELECT * FROM "OutputChart" WHERE maternalPatientId = ? ORDER BY createdAt DESC`, args: [id] }),
-    db.execute({ sql: `SELECT * FROM "LabResult" WHERE maternalPatientId = ? ORDER BY createdAt DESC`, args: [id] }),
-    db.execute({ sql: `SELECT * FROM "PhysicianOrder" WHERE maternalPatientId = ? ORDER BY createdAt DESC`, args: [id] }),
-    db.execute({ sql: `SELECT * FROM "UltrasoundResult" WHERE maternalPatientId = ? ORDER BY createdAt DESC`, args: [id] }),
-  ]);
-
-  return {
-    ...patient,
-    vitalSigns: vitalSigns.rows,
-    medications: medications.rows,
-    nurseNotes: nurseNotes.rows,
-    outputCharts: outputCharts.rows,
-    labResults: labResults.rows,
-    physicianOrders: physicianOrders.rows,
-    ultrasoundResults: ultrasoundResults.rows,
-    newborns: [],
-    postpartumRecords: [],
-  };
+  return patient;
 }
 
 export async function getDashboardData() {
-  const [maternalTotal, maternalActive, newbornTotal, recent] = await Promise.all([
-    db.execute(`SELECT COUNT(*) as c FROM "MaternalPatient"`),
-    db.execute(`SELECT COUNT(*) as c FROM "MaternalPatient" WHERE status = 'Active'`),
-    db.execute(`SELECT COUNT(*) as c FROM "NewbornRecord"`),
-    db.execute(`
-      SELECT id, firstName, lastName, dateAdmitted, admittingDiagnosis, status, admissionNumber
-      FROM "MaternalPatient"
-      ORDER BY date(dateAdmitted) DESC, createdAt DESC
-      LIMIT 5
-    `),
+  const [totalMaternal, activeMaternal, totalNewborn, recentAdmissions] = await Promise.all([
+    prisma.maternalPatient.count(),
+    prisma.maternalPatient.count({ where: { status: "Active" } }),
+    prisma.newbornRecord.count(),
+    prisma.maternalPatient.findMany({
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        dateAdmitted: true,
+        admittingDiagnosis: true,
+        status: true,
+        admissionNumber: true,
+      },
+      orderBy: [
+        { dateAdmitted: "desc" },
+        { createdAt: "desc" },
+      ],
+      take: 5,
+    }),
   ]);
 
   return {
-    totalMaternal: Number((maternalTotal.rows[0] as any)?.c ?? 0),
-    activeMaternal: Number((maternalActive.rows[0] as any)?.c ?? 0),
-    totalNewborn: Number((newbornTotal.rows[0] as any)?.c ?? 0),
-    recentAdmissions: recent.rows as any[],
+    totalMaternal,
+    activeMaternal,
+    totalNewborn,
+    recentAdmissions,
   };
 }

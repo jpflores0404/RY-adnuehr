@@ -56,7 +56,7 @@ export default async function MaternalRecordsList() {
                     <td className="p-4 font-mono text-sm text-slate-700">{patient.admissionNumber as string}</td>
                     <td className="p-4 text-slate-700">{patient.age as number}</td>
                     <td className="p-4 text-slate-700">{(patient.attendingPhysician as string) || "Unassigned"}</td>
-                    <td className="p-4 text-slate-700">{new Date(patient.dateAdmitted as string).toLocaleDateString()}</td>
+                    <td className="p-4 text-slate-700">{new Date(patient.dateAdmitted as any).toLocaleDateString()}</td>
                     <td className="p-4">
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm border ${(patient.status as string) === "Active"

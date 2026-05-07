@@ -27,7 +27,7 @@ export default async function MaternalChartPage({ params }: { params: Promise<{ 
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-2 mt-2 text-sm text-slate-500">
             <p><span className="font-medium text-slate-700">ADM #:</span> {patient.admissionNumber as string}</p>
-            <p><span className="font-medium text-slate-700">Admitted:</span> {new Date(patient.dateAdmitted as string).toLocaleDateString()}</p>
+            <p><span className="font-medium text-slate-700">Admitted:</span> {new Date(patient.dateAdmitted as any).toLocaleDateString()}</p>
             <p><span className="font-medium text-slate-700">Attending MD:</span> {(patient.attendingPhysician as string) || "Unassigned"}</p>
             <p><span className="font-medium text-slate-700">Age:</span> {patient.age as number} yrs</p>
           </div>

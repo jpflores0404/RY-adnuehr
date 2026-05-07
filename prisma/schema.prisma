@@ -2,7 +2,7 @@
 
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
+  output          = "../src/generated/prisma"
   binaryTargets   = ["native", "rhel-openssl-3.0.x"]
 }
 
@@ -113,15 +113,17 @@ model MaternalPatient {
   updatedAt         DateTime @updatedAt
 
   // Relations
-  newborns          NewbornRecord[]
-  vitalSigns        VitalSign[]
-  medications       Medication[]
-  nurseNotes        NurseNote[]
-  outputCharts      OutputChart[]
-  labResults        LabResult[]
-  ultrasoundResults UltrasoundResult[]
-  postpartumRecords PostpartumRecord[]
-  physicianOrders   PhysicianOrder[]
+  newborns              NewbornRecord[]
+  vitalSigns            VitalSign[]
+  medications           Medication[]
+  nurseNotes            NurseNote[]
+  outputCharts          OutputChart[]
+  labResults            LabResult[]
+  ultrasoundResults     UltrasoundResult[]
+  postpartumRecords     PostpartumRecord[]
+  physicianOrders       PhysicianOrder[]
+  carePlans             CarePlan[]
+  intakeOutputSummaries IntakeOutputSummary[]
 }
 
 // ─── B. Newborn Record ────────────────────────────────────────────────────────
@@ -358,4 +360,31 @@ model ApgarScore {
   totalScore         Int      @default(0)
 
   createdAt          DateTime @default(now())
+}
+
+// ─── F. Care Plan & Intake/Output ─────────────────────────────────────────────
+
+model CarePlan {
+  id                String   @id @default(cuid())
+  maternalPatientId String
+  maternalPatient   MaternalPatient @relation(fields: [maternalPatientId], references: [id], onDelete: Cascade)
+  diagnosis         String?
+  planning          String?
+  intervention      String?
+  evaluation        String?
+
+  createdAt         DateTime @default(now())
+}
+
+model IntakeOutputSummary {
+  id                String   @id @default(cuid())
+  maternalPatientId String
+  maternalPatient   MaternalPatient @relation(fields: [maternalPatientId], references: [id], onDelete: Cascade)
+  oralIntakeMl      String?
+  ivIntakeMl        String?
+  urineOutputMl     String?
+  stoolCount        String?
+  notes             String?
+
+  createdAt         DateTime @default(now())
 }
