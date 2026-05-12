@@ -1,6 +1,8 @@
 import { PrismaClient } from "@/generated/prisma";
 import { PrismaLibSQL } from "@prisma/adapter-libsql";
 import { createClient } from "@libsql/client";
+import fs from "node:fs";
+import path from "node:path";
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined };
 const globalForPrismaMeta = globalThis as unknown as { prismaLogPrinted?: boolean };
@@ -27,6 +29,19 @@ function buildPrismaClient(): PrismaClient {
     });
     const adapter = new PrismaLibSQL(libsql);
     return new PrismaClient({ adapter });
+  }
+
+  // Netlify serverless runtime cannot reliably write next to bundled files.
+  // Copy the bundled SQLite DB to /tmp and point Prisma there.
+  if (isProduction) {
+    const sourceDbPath = path.join(process.cwd(), "dev.db");
+    const runtimeDbPath = "/tmp/dev.db";
+
+    if (fs.existsSync(sourceDbPath) && !fs.existsSync(runtimeDbPath)) {
+      fs.copyFileSync(sourceDbPath, runtimeDbPath);
+    }
+
+    process.env.DATABASE_URL = `file:${runtimeDbPath}`;
   }
 
   // Local development — use the SQLite file
