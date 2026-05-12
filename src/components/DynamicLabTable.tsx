@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, Save, X, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Trash2, Save, X, ChevronDown, ChevronUp, Pencil } from "lucide-react";
 import { addLabResult, deleteLabResult } from "@/app/actions/subrecords";
 
 export default function DynamicLabTable({ patientId, initialLabs }: { patientId: string, initialLabs: any[] }) {
@@ -141,6 +141,9 @@ export default function DynamicLabTable({ patientId, initialLabs }: { patientId:
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
+                                    <button type="button" onClick={(e) => e.stopPropagation()} className="text-blue-400 hover:text-blue-600 p-1 bg-white rounded-full transition-colors" title="Edit">
+                                        <Pencil size={16} />
+                                    </button>
                                     <button onClick={(e) => { e.stopPropagation(); handleDelete(result.id); }} className="text-slate-400 hover:text-rose-500 p-1 bg-white rounded-full transition-colors" title="Delete">
                                         <Trash2 size={16} />
                                     </button>

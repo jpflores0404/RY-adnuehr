@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, Save, X, Check, Baby, Stethoscope } from "lucide-react";
+import { Plus, Trash2, Save, X, Check, Baby, Stethoscope, Pencil } from "lucide-react";
 import { addPostpartumRecord, deletePostpartumRecord } from "@/app/actions/subrecords";
 
 interface PostpartumRecordData {
@@ -625,13 +625,22 @@ export default function PostpartumMonitoringForm({
                   <td className="p-3 font-bold text-slate-500 text-[11px] uppercase tracking-wider sticky left-0 bg-slate-50 z-10">Actions</td>
                   {records.map((r) => (
                     <td key={r.id} className="p-3 text-center">
-                      <button
-                        onClick={() => handleDelete(r.id)}
-                        className="text-rose-400 hover:text-rose-600 transition-colors mx-auto"
-                        title="Delete assessment"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          className="text-blue-400 hover:text-blue-600 transition-colors"
+                          title="Edit assessment"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(r.id)}
+                          className="text-rose-400 hover:text-rose-600 transition-colors"
+                          title="Delete assessment"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </td>
                   ))}
                 </tr>

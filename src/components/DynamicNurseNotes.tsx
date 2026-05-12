@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, Save } from "lucide-react";
+import { Plus, Trash2, Save, Pencil } from "lucide-react";
 import { addNurseNote, deleteNurseNote } from "@/app/actions/subrecords";
 
 export default function DynamicNurseNotes({ patientId, initialNotes, isNewborn = false }: { patientId: string, initialNotes: any[], isNewborn?: boolean }) {
@@ -85,6 +85,7 @@ export default function DynamicNurseNotes({ patientId, initialNotes, isNewborn =
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold">{note.shift}</span>
+                      <button type="button" className="text-blue-400 hover:text-blue-600 transition-colors" title="Edit"><Pencil size={14} /></button>
                       <button onClick={() => handleDelete(note.id)} className="text-rose-400 hover:text-rose-600 transition-colors" title="Delete"><Trash2 size={14} /></button>
                     </div>
                 </div>

@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, LogOut } from 'lucide-react';
 import { logoutAction } from '@/app/actions/auth';
 
 const navItems = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Patient', href: '/maternal', icon: Users },
+  { name: 'Infographics', href: '/infographics', icon: FileText },
 ];
 
 export default function Sidebar() {

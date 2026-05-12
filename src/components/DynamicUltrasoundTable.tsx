@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, Save } from "lucide-react";
+import { Plus, Trash2, Save, Pencil } from "lucide-react";
 import { addUltrasoundResult, deleteUltrasoundResult } from "@/app/actions/subrecords";
 
 export default function DynamicUltrasoundTable({ patientId, initialUltrasounds }: { patientId: string, initialUltrasounds: any[] }) {
@@ -74,9 +74,14 @@ export default function DynamicUltrasoundTable({ patientId, initialUltrasounds }
                     <td className="p-4 align-top font-bold text-slate-700 border-r border-white/30">{result.datePerformed || "—"}</td>
                     <td className="p-4 align-top whitespace-pre-wrap font-mono text-sm break-words text-slate-800">{result.impression}</td>
                     <td className="p-4 align-top text-center">
-                        <button onClick={() => handleDelete(result.id)} className="text-slate-400 hover:text-rose-500 transition-colors p-1" title="Delete Result">
-                        <Trash2 size={16} />
-                        </button>
+                        <div className="flex items-center justify-center gap-2">
+                          <button type="button" className="text-blue-400 hover:text-blue-600 transition-colors p-1" title="Edit Result">
+                            <Pencil size={16} />
+                          </button>
+                          <button onClick={() => handleDelete(result.id)} className="text-slate-400 hover:text-rose-500 transition-colors p-1" title="Delete Result">
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                     </td>
                     </tr>
                 ))

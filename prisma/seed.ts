@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../src/generated/prisma";
 
 const prisma = new PrismaClient();
 
@@ -26,6 +26,9 @@ async function main() {
       preExistingIllness: "Pregestational DM",
       bloodTypeABO: "B",
       bloodTypeRh: "+",
+      weight: "75kg",
+      height: "160cm",
+      diet: "Diabetic",
       vitalSigns: {
         create: [
           { date: "2026-04-02", time: "08:00", bloodPressure: "130/85", pulseRate: "96", respiratoryRate: "20", temperature: "37.1", signature: "RN" },
@@ -90,6 +93,9 @@ async function main() {
       aog: "37 1/7 weeks",
       bloodTypeABO: "A",
       bloodTypeRh: "+",
+      weight: "80kg",
+      height: "160cm",
+      diet: "Low-salt",
       vitalSigns: {
         create: [
           { date: "2026-04-06", time: "08:00", bloodPressure: "152/98", pulseRate: "100", respiratoryRate: "20", temperature: "37.1", signature: "RN" },
@@ -148,6 +154,8 @@ async function main() {
       aog: "38 2/7 weeks",
       bloodTypeABO: "O",
       bloodTypeRh: "+",
+      weight: "78kg",
+      height: "158cm",
       vitalSigns: {
         create: [
           { date: "2026-04-10", time: "08:00", bloodPressure: "100/60", pulseRate: "110", respiratoryRate: "22", temperature: "36.9", signature: "RN" },
@@ -194,6 +202,9 @@ async function main() {
       aog: "34 5/7 weeks",
       bloodTypeABO: "A",
       bloodTypeRh: "+",
+      weight: "70kg",
+      height: "162cm",
+      diet: "High iron",
       vitalSigns: {
         create: [
           { date: "2026-04-15", time: "08:00", bloodPressure: "105/70", pulseRate: "88", respiratoryRate: "18", temperature: "36.9", signature: "RN" },

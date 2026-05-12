@@ -37,6 +37,7 @@ const TABS = [
   "Care Plan (ADPIE)",
   "Diagnostics / Procedures",
   "Intake & Output (I&O)",
+  "INFOGRAPHICS",
 ] as const;
 
 const CLINICAL_SEED: Record<string, { chiefComplaint: string; adpie: Adpie; io: IntakeOutput }> = {
@@ -107,9 +108,9 @@ export default function PatientChartTabs({ patient }: PatientChartTabsProps) {
     civilStatus: patient.civilStatus || "—",
     religion: patient.religion || "—",
     occupation: patient.occupation || "—",
-    diet: patient.preExistingIllness?.toLowerCase().includes("dm") ? "Diabetic" : "As Ordered",
-    weight: "",
-    height: "",
+    diet: patient.diet || "As Ordered",
+    weight: patient.weight || "—",
+    height: patient.height || "—",
     bloodType: [patient.bloodTypeABO, patient.bloodTypeRh].filter(Boolean).join(" ") || "—",
     diagnosis: patient.admittingDiagnosis || "—",
     attending: patient.attendingPhysician || "—",
@@ -262,6 +263,22 @@ export default function PatientChartTabs({ patient }: PatientChartTabsProps) {
                   )}
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "INFOGRAPHICS" && (
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-700">Infographics</h3>
+            <p className="text-sm text-slate-600">
+              RR25 G1 MODULES 2 content is shown below. Scroll inside the viewer to read all pages.
+            </p>
+            <div className="h-[70vh] min-h-[520px] max-h-[900px] overflow-y-auto border border-slate-200 rounded-xl bg-slate-50">
+              <iframe
+                title="RR25 G1 MODULES 2"
+                src="/rr25-g1-modules-2.pdf"
+                className="w-full h-full"
+              />
             </div>
           </div>
         )}

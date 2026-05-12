@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, Save } from "lucide-react";
+import { Plus, Trash2, Save, Pencil } from "lucide-react";
 import { addMedication, deleteMedication } from "@/app/actions/subrecords";
 
 export default function DynamicMedicationTable({ patientId, initialMeds, isNewborn = false }: { patientId: string, initialMeds: any[], isNewborn?: boolean }) {
@@ -80,9 +80,14 @@ export default function DynamicMedicationTable({ patientId, initialMeds, isNewbo
                   </td>
                   <td className="p-3 text-slate-500 italic">{m.givenBy}</td>
                   <td className="p-3">
-                    <button onClick={() => handleDelete(m.id)} className="opacity-0 group-hover:opacity-100 text-rose-400 hover:text-rose-600 transition-all" title="Delete">
-                      <Trash2 size={14} />
-                    </button>
+                    <div className="opacity-0 group-hover:opacity-100 flex items-center gap-2 transition-all">
+                      <button type="button" className="text-blue-400 hover:text-blue-600" title="Edit">
+                        <Pencil size={14} />
+                      </button>
+                      <button onClick={() => handleDelete(m.id)} className="text-rose-400 hover:text-rose-600" title="Delete">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))

@@ -21,7 +21,6 @@ body {
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-gradient-start: #ffffff;
     --bg-gradient-middle: #fef2f2;
     --bg-gradient-end: #fecaca;
     --foreground: #0f172a;

@@ -27,10 +27,10 @@ export default async function RootLayout({
         {isAuthenticated && <Sidebar />}
         <main className={`flex-1 overflow-y-auto w-full relative z-10 ${isAuthenticated ? 'p-8' : ''}`}>
           {isAuthenticated && (
-            <div className="absolute top-6 right-8 z-30">
+            <div className="fixed right-4 bottom-4 sm:right-8 sm:bottom-8 z-40">
               <Link
                 href="/maternal/new"
-                className="inline-flex items-center px-6 py-3 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-semibold shadow-lg shadow-red-300/50 transition-all"
+                className="inline-flex items-center px-5 py-3 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-semibold shadow-lg shadow-red-300/50 transition-all"
               >
                 + New Patient
               </Link>

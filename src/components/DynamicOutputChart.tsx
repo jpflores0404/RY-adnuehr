@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, Save } from "lucide-react";
+import { Plus, Trash2, Save, Pencil } from "lucide-react";
 import { addOutputChart, deleteOutputChart } from "@/app/actions/subrecords";
 
 export default function DynamicOutputChart({ patientId, initialOutput, isNewborn = false }: { patientId: string, initialOutput: any[], isNewborn?: boolean }) {
@@ -79,9 +79,14 @@ export default function DynamicOutputChart({ patientId, initialOutput, isNewborn
                   <td className="p-3 font-mono font-bold text-amber-700 text-lg">{out.stoolCount}</td>
                   <td className="p-3 font-mono font-bold text-yellow-600 text-lg border-l border-slate-100">{out.urineCount}</td>
                   <td className="p-3">
-                    <button onClick={() => handleDelete(out.id)} className="text-rose-400 hover:text-rose-600 transition-colors" title="Delete">
-                      <Trash2 size={14} />
-                    </button>
+                    <div className="flex items-center justify-center gap-2">
+                      <button type="button" className="text-blue-400 hover:text-blue-600 transition-colors" title="Edit">
+                        <Pencil size={14} />
+                      </button>
+                      <button onClick={() => handleDelete(out.id)} className="text-rose-400 hover:text-rose-600 transition-colors" title="Delete">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
