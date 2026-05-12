@@ -9,7 +9,8 @@ function buildPrismaClient(): PrismaClient {
   const tursoUrl = process.env.TURSO_DATABASE_URL;
   const tursoToken = process.env.TURSO_AUTH_TOKEN;
   const isProduction = process.env.NODE_ENV === "production";
-  const useTurso = isProduction && !!tursoUrl && !!tursoToken;
+  const forceTurso = process.env.USE_TURSO === "true";
+  const useTurso = isProduction && forceTurso && !!tursoUrl && !!tursoToken;
 
   // One-time startup hint so we can quickly see which DB backend is active.
   if (!globalForPrismaMeta.prismaLogPrinted) {
@@ -17,8 +18,8 @@ function buildPrismaClient(): PrismaClient {
     globalForPrismaMeta.prismaLogPrinted = true;
   }
 
-  // Use Turso only in production when credentials are available.
-  // Local development should always use DATABASE_URL (SQLite file).
+  // Use Turso only when explicitly enabled.
+  // This keeps production stable on hosts that don't have working Turso credentials.
   if (useTurso) {
     const libsql = createClient({
       url: tursoUrl,
